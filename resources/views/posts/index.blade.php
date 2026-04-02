@@ -3,33 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All Posts</title>
-    <!-- Tailwind CSS CDN for Hyper UI -->
+    <title>Posts</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
-
-<div class="max-w-screen-xl px-4 py-8 mx-auto sm:px-6 sm:py-12 lg:px-8">
-    <header class="text-center">
-        <h2 class="text-xl font-bold text-gray-900 sm:text-3xl">Our Blog Posts</h2>
-        <p class="max-w-md mx-auto mt-4 text-gray-500">Read the latest articles and stories from our authors.</p>
-    </header>
-
-    <ul class="grid gap-4 mt-8 sm:grid-cols-2 lg:grid-cols-3">
-        @foreach ($posts as $post)
-        <li>
-            <a href="/posts/{{ $post['id'] }}" class="block overflow-hidden group">
-                <div class="p-6 transition border border-gray-100 bg-white rounded-lg shadow-sm hover:ring-1 hover:ring-gray-200 hover:shadow-lg">
-                    <span class="inline-block px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded-full"> Post #{{ $post['id'] }} </span>
-                    <h3 class="mt-4 text-lg font-bold text-gray-900 group-hover:text-blue-600">{{ $post['title'] }}</h3>
-                    <p class="mt-2 text-sm text-gray-500 line-clamp-3">{{ $post['content'] }}</p>
-                    <p class="mt-4 text-xs font-medium text-gray-400">By {{ $post['author'] }}</p>
-                </div>
+    <section class="mx-auto max-w-5xl px-4 py-10">
+        <div class="mb-6 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold">All Posts</h1>
+            </div>
+            <a href="/posts/create" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700">
+                Create Post
             </a>
-        </li>
-        @endforeach
-    </ul>
-</div>
+        </div>
 
+        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">ID</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Title</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Content</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach ($posts as $post)
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-sm">{{ $post['id'] }}</td>
+                            <td class="px-4 py-3 text-sm font-medium">{{ $post['title'] }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ $post['content'] }}</td>
+                            <td class="px-4 py-3 text-sm">
+                                <a href="/posts/{{ $post['id'] }}" class="mr-3 text-blue-600 hover:underline">View</a>
+                                <a href="/posts/{{ $post['id'] }}/edit" class="mr-3 text-gray-700 hover:underline">Edit</a>
+                                <form action="/posts/{{ $post['id'] }}" method="POST" class="inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button
+                                        type="submit"
+                                        class="text-red-600 hover:underline"
+                                        onclick="return confirm('Delete this post?')"
+                                    >
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </section>
 </body>
 </html>
