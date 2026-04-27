@@ -15,8 +15,10 @@
 
         <article class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <p class="text-sm text-gray-500">ID: {{ $post['id'] }}</p>
+            <p class="mt-1 text-sm text-gray-500">Created by: {{ $post->user?->name ?? 'Unknown' }}</p>
+            <p class="text-sm text-gray-500">Created at: {{ $post->created_at?->format('M d, Y h:i A') }}</p>
             <h1 class="mt-1 text-2xl font-bold">{{ $post['title'] }}</h1>
-            <p class="mt-4 leading-7 text-gray-700">{{ $post['content'] }}</p>
+            <p class="mt-4 leading-7 text-gray-700">{{ $post['description'] }}</p>
         </article>
 
         <div class="mt-6 flex gap-3">

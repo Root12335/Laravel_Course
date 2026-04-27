@@ -1,41 +1,33 @@
 <?php
 
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PostController;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', function () {
-    return view('welcome');
+    return Inertia::render('Welcome', [
+        'canLogin' => Route::has('login'),
+        'canRegister' => Route::has('register'),
+        'laravelVersion' => Application::VERSION,
+        'phpVersion' => PHP_VERSION,
+    ]);
 });
 
+Route::get('/dashboard', function () {
+    return Inertia::render('Dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-use App\Http\Controllers\PostController;
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    Route::post('/posts/{post}/restore', [PostController::class, 'restore'])->name('posts.restore');
+    Route::delete('/posts/{post}/force-delete', [PostController::class, 'forceDelete'])->name('posts.forceDelete');
+    Route::delete('/posts/{post}/image', [PostController::class, 'deleteImage'])->name('posts.deleteImage');
+    Route::resource('posts', PostController::class);
+});
 
-
-// Route::get('/posts', function () {
-//     $posts = [
-//     1 => ['id' => 1, 'title' => 'Introductions to Laravel', 'content' => 'Laravel is a PHP web application framework with expressive, elegant syntax.', 'author' => 'Amr'],
-//     2 => ['id' => 2, 'title' => 'Understanding Blade', 'content' => 'Blade is the simple, yet powerful templating engine provided with Laravel.', 'author' => 'Ahmad'],
-//     3 => ['id' => 3, 'title' => 'Routing Mastery', 'content' => 'The most basic Laravel routes accept a URI and a closure.', 'author' => 'Hassan'],
-//     4 => ['id' => 4, 'title' => 'Database Migrations', 'content' => 'Migrations are like version control for your database.', 'author' => 'Omar'],
-//     5 => ['id' => 5, 'title' => 'Building Awesome UIs', 'content' => 'Tailwind makes building unique user interfaces super fast and easy.', 'author' => 'Sara'],
-// ];
-//     return view('posts.index', compact('posts'));
-// });
-
-// Route::get('/posts/{id}', function ($id) {
-//     $posts = [
-//         1 => ['id' => 1, 'title' => 'Introductions to Laravel', 'content' => 'Laravel is a PHP web application framework with expressive, elegant syntax.', 'author' => 'Amr'],
-//         2 => ['id' => 2, 'title' => 'Understanding Blade', 'content' => 'Blade is the simple, yet powerful templating engine provided with Laravel.', 'author' => 'Ahmad'],
-//         3 => ['id' => 3, 'title' => 'Routing Mastery', 'content' => 'The most basic Laravel routes accept a URI and a closure.', 'author' => 'Hassan'],
-//         4 => ['id' => 4, 'title' => 'Database Migrations', 'content' => 'Migrations are like version control for your database.', 'author' => 'Omar'],
-//         5 => ['id' => 5, 'title' => 'Building Awesome UIs', 'content' => 'Tailwind makes building unique user interfaces super fast and easy.', 'author' => 'Sara'],
-//     ];
-//         return view('posts.show', ['post' => $posts[$id]]);
-// })->where('id', '[0-9]+');
-
-Route::get('/posts', [PostController::class , 'index']);
-Route::get('/posts/create', [PostController::class , 'create']);
-Route::post('/posts', [PostController::class , 'store']);
-Route::get('/posts/{id}/edit', [PostController::class , 'edit']);
-Route::put('/posts/{id}', [PostController::class , 'update']);
-Route::delete('/posts/{id}', [PostController::class , 'destroy']);
-Route::get('/posts/{id}', [PostController::class , 'show'])->where('id', '[0-9]+');
+require __DIR__.'/auth.php';
