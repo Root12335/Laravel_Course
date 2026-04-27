@@ -2,66 +2,117 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Post;
+use App\Models\User;
+use App\Http\Requests\StorePostRequest;
+use App\Http\Requests\UpdatePostRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
-    private array $posts = [
-        1 => ['id' => 1, 'title' => 'First Post', 'content' => 'This is the first simple post.'],
-        2 => ['id' => 2, 'title' => 'Second Post', 'content' => 'This is another short post content.'],
-        3 => ['id' => 3, 'title' => 'Third Post', 'content' => 'This is the third post content.'],
-    ];
-
     public function index()
     {
-        return view('posts.index', ['posts' => $this->posts]);
+        $posts = Post::withTrashed()->with('user')->latest()->paginate(10);
+        return view('posts.index', compact('posts'));
     }
 
     public function create()
     {
-        return view('posts.create');
+        $users = User::all();
+        return view('posts.create', compact('users'));
     }
 
-    public function store(Request $request)
+    public function store(StorePostRequest $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-        ]);
+        $data = [
+            "title" => $request->title,
+            "description" => $request->description,
+            "user_id" => Auth::id()
+        ];
 
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('posts', 'public');
+        }
+
+        Post::create($data);
+        
         return redirect('/posts');
     }
 
     public function show($id)
     {
-        if (!isset($this->posts[$id])) {
-            abort(404);
-        }
-
-        return view('posts.show', ['post' => $this->posts[$id]]);
+        $post = Post::with('user')->findOrFail($id);
+        return view('posts.show', compact('post'));
     }
 
     public function edit($id)
     {
-        if (!isset($this->posts[$id])) {
-            abort(404);
-        }
+        $post = Post::findOrFail($id);
+        $users = User::all();
 
-        return view('posts.edit', ['post' => $this->posts[$id]]);
+        return view('posts.edit', compact('post', 'users'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdatePostRequest $request, $id)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-        ]);
-            
-        return redirect("/posts/{$id}");
+        $post = Post::findOrFail($id);
+        $data = $request->validated();
+
+        if ($request->hasFile('image')) {
+            if ($post->image) {
+                Storage::disk('public')->delete($post->image);
+            }
+            $data['image'] = $request->file('image')->store('posts', 'public');
+        }
+
+        $post->update($data);
+
+        // return redirect("/posts/$id");
+                return redirect("/posts");
+
     }
 
     public function destroy($id)
     {
+        $post = Post::findOrFail($id);
+        
+        // Soft delete the post. The file is kept so it can be restored.
+        $post->delete();
+
+        return redirect('/posts');
+    }
+
+    public function restore($id)
+    {
+        $post = Post::withTrashed()->findOrFail($id);
+        $post->restore();
+
+        return redirect('/posts');
+    }
+
+    public function forceDelete($id)
+    {
+        $post = Post::withTrashed()->findOrFail($id);
+        
+        if ($post->image) {
+            Storage::disk('public')->delete($post->image);
+        }
+
+        $post->forceDelete();
+
+        return redirect('/posts');
+    }
+
+    public function deleteImage($id)
+    {
+        $post = Post::findOrFail($id);
+        
+        if ($post->image) {
+            Storage::disk('public')->delete($post->image);
+            $post->update(['image' => null]);
+        }
+
         return redirect('/posts');
     }
 }
